@@ -14,92 +14,58 @@ import requests
 import json
 
 
+#this function takes an organization name and finds its corresponding ID and returns the ID
 def getOrgID(base_url, headers, org_name):
     orgs_endpoint = "organizations"
-    response = json.loads(requests.get(base_url+orgs_endpoint, headers=headers).text)
+    response = requests.get(base_url+orgs_endpoint, headers=headers)
 
-    for org in response:
+    if response.status_code != 200:
+        return None
+
+    organizations = json.loads(response.text)
+    for org in organizations:
         if org["name"] == org_name:
             return org["id"]
 
     return None
 
 
+#this function takes an organization ID and network name and finds its corresponding ID and returns the ID
 def getNetworkID(base_url, headers, org_id, net_name):
     org_nets_endpoint = "organizations/{}/networks".format(org_id)
-    response = json.loads(requests.get(base_url+org_nets_endpoint, headers=headers).text)
+    response = requests.get(base_url+org_nets_endpoint, headers=headers)
 
-    for network in response:
+    if response.status_code != 200:
+        return None
+
+    networks = json.loads(response.text)
+    for network in networks:
         if network["name"] == net_name:
             return network["id"]
 
     return None
 
 
-def getDeviceSerial(base_url, headers, net_id, device_name):
-    net_device_endpoint = "networks/{}/devices".format(net_id)
-    response = json.loads(requests.get(base_url+net_device_endpoint, headers=headers).text)
-
-    for device in response:
-        if device["name"] == device_name:
-            return device["serial"]
-
-    return None
-
-
-def getNetworkDetails(base_url, headers, net_id):
-    net_endpoint = "networks/{}".format(net_id)
-    response = requests.get(base_url+net_endpoint, headers=headers)
-
-    network = json.loads(response)
-
-    return network
-
-
+#this function takes a network ID and a list of device serial numbers and claims those devices into the specified network
 def claimDevicesToNetwork(base_url, headers, net_id, devices):
     net_claim_endpoint = "networks/{}/devices/claim".format(net_id)
     body = {"serials": devices}
     response = requests.post(base_url+net_claim_endpoint, headers=headers, data=json.dumps(body))
 
-    print(response.status_code)
-
     return response.status_code
 
 
-def getDeviceDetails(base_url, headers, serial):
-    device_endpoint = "devices/{}".format(serial)
-    response = requests.get(base_url+device_endpoint, headers=headers)
-
-    device = json.loads(response.text)
-
-    return device
-
-
+#this function takes a device serial number and a dictionary that contains the
 def editDeviceDetails(base_url, headers, serial, data):
     device_endpoint = "devices/{}".format(serial)
     response = requests.put(base_url+device_endpoint, headers=headers, data=json.dumps(data))
 
-    updated_device = json.loads(response.text)
-
-    return updated_device
+    return response.status_code
 
 
+#this function takes a network ID and a dictionary that defines the alert profile
 def createAlertProfile(base_url, headers, net_id, data):
     alert_profile_endpoint = "networks/{}/sensor/alerts/profiles".format(net_id)
     response = requests.post(base_url+alert_profile_endpoint, headers=headers, data=json.dumps(data))
 
-    print(response)
-    print(response.status_code)
-
-    alert_profile = json.loads(response.text)
-
-    return alert_profile
-
-
-def getSensors(base_url, headers, net_id):
-    sensors_endpoint = "networks/{}/sensors".format(net_id)
-    response = requests.get(base_url+sensors_endpoint, headers=headers)
-
-    sensors = json.loads(response.text)
-
-    return sensors
+    return response.status_code
